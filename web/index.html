@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Pun Board</title>
+		<style>
+			label, textarea, input {
+				display: block;
+			}
+			textarea {
+				font-family: serif;
+				font-size: 16px;
+				width: 200px;
+				resize: none;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+	<body>
+		<form action="post">
+			<label for="pun">What was the pun?</label>
+			<textarea id="pun" name="pun"></textarea>
+			<label for="offender">Who was the offender?</label>
+			<input id="offender" name="offender">
+			<input type="submit" value="Submit">
+		</form>
+		<script>
+			const pun = document.getElementById("pun");
+			pun.addEventListener("input", function() {
+				this.style.height = "";
+				this.style.height = `${this.scrollHeight}px`
+				console.log(this);
+				console.log(this.scrollHeight);
+			})
+			console.log("ok");
+		</script>
+	</body>
+</html>
