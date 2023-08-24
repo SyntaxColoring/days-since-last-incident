@@ -1,125 +1,131 @@
-#include <Adafruit_LEDBackpack.h>
-#include <Inkplate.h>
-#include <WiFi.h>
-#include <MDNS_Generic.h>
-#include <uri/UriBraces.h>
-#include <WebServer.h>
+#include <Arduino.h>
 
-#include <SPI.h>
+#include "pins.hpp"
+#include "seconds.hpp"
+#include "seven_segment.hpp"
 
-#include "config_with_secrets.hpp"
 
-#include <Fonts/FreeMono12pt7b.h>
-#include <Fonts/FreeSerifBoldItalic24pt7b.h>
+const static unsigned SHAME_MILLIS = 2500;
+const static unsigned SHAME_HZ_1 = 64;
+const static unsigned SHAME_HZ_2 = 32;
+const static unsigned SHAME_TEXT_TOGGLE_MILLIS = SHAME_MILLIS / 4;
 
-static const unsigned HTTP_PORT = 80;
+const static unsigned long SECONDS_PER_COUNT = 60*60;
 
-WiFiUDP udp;
-MDNS mdns(udp);
-WebServer server(80);
-Adafruit_7segment sevenSegment;
-Inkplate display;
+static unsigned long secondsAtZeroCount = 0;
 
-IPAddress currentIP;
+static void turnSegmentOn(const unsigned pin)
+{
+  // Sink current through the MCU.
+  pinMode(pin, OUTPUT);
+  digitalWrite(pin, LOW);
+}
 
-static void handleRoot();
-static void drawPage(const char* quote, const char* const hostname, const IPAddress ip);
-static void printConnectionInstructions(const char* const hostname, const IPAddress ip);
+static void turnSegmentOff(const unsigned pin)
+{
+  // Use INPUT mode as a high-z mode to block current through the segment.
+  // I'm pretty sure this far exceeds the MCU's absolute maximum voltage rating
+  // for the GPIO pins, but, uh, it seems to work and I don't want to redesign the circuit.
+  pinMode(pin, INPUT);
+}
+
+static void setSegment(const unsigned pin, const bool on)
+{
+  if (on) turnSegmentOn(pin);
+  else turnSegmentOff(pin);
+}
+
+// Return an interpolated value between f1 and f2 based on currentTime and maxTime.
+static unsigned interpolateFrequency(
+  const unsigned f1,
+  const unsigned f2,
+  const unsigned long currentTime,
+  const unsigned long maxTime
+)
+{
+  // Probably not overflow-safe, but this works for our purposes.
+  return (f1*(maxTime-currentTime) + f2*currentTime) / maxTime;
+}
+
+static void setDigit(const SevenSegmentPinMap pins, const SevenSegment value)
+{
+  setSegment(pins.a_pin, value.a);
+  setSegment(pins.b_pin, value.b);
+  setSegment(pins.c_pin, value.c);
+  setSegment(pins.d_pin, value.d);
+  setSegment(pins.e_pin, value.e);
+  setSegment(pins.f_pin, value.f);
+  setSegment(pins.g_pin, value.g);
+}
+
+static void engageShameMode()
+{
+  const unsigned long begin = millis();
+  for (unsigned long elapsed = 0; elapsed < SHAME_MILLIS; elapsed = millis() - begin)
+  {
+    const unsigned frequency = interpolateFrequency(
+      SHAME_HZ_1,
+      SHAME_HZ_2,
+      elapsed,
+      SHAME_MILLIS
+    );
+    tone(pins::SPEAKER, frequency);
+
+    if (elapsed / SHAME_TEXT_TOGGLE_MILLIS % 2 == 0)
+    {
+      setDigit(pins::TENS_DIGIT, encodeLetter('o'));
+      setDigit(pins::ONES_DIGIT, encodeLetter('h'));
+    }
+    else
+    {
+      setDigit(pins::TENS_DIGIT, encodeLetter('n'));
+      setDigit(pins::ONES_DIGIT, encodeLetter('o'));
+    }
+  }
+
+  noTone(pins::SPEAKER);
+}
 
 void setup() {
-  Serial.begin(9600);
-  Serial.println("Setting up...");
-
-  sevenSegment.begin();
-
-  sevenSegment.print(0xBEEF, HEX);
-  sevenSegment.blinkRate(HT16K33_BLINK_1HZ);
-  sevenSegment.writeDisplay();
-
-  display.begin();
-
-  Serial.print("Connecting to Wi-Fi...");
-  WiFi.begin(Config::SSID, Config::PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  currentIP = WiFi.localIP();
-  Serial.print("Connected as: ");
-  Serial.println(currentIP);
-
-  server.on("/", handleRoot);
-  server.begin();
-
-  mdns.begin(currentIP, Config::HOSTNAME);
-  mdns.addServiceRecord(Config::SERVICE_NAME, HTTP_PORT, MDNSServiceTCP);
-  Serial.print("Advertising on mDNS and DNS-SD as ");
-  Serial.print(Config::HOSTNAME);
-  Serial.print(".local, \"");
-  Serial.print(Config::SERVICE_NAME);
-  Serial.println("\".");
-
-  printConnectionInstructions(Config::HOSTNAME, currentIP);
-  display.display();
-
-  Serial.println("Done setup.");
-  sevenSegment.blinkRate(HT16K33_BLINK_OFF);
+  pinMode(pins::BUTTON, INPUT_PULLUP);
 }
 
-void loop() {
-  mdns.run();
-  server.handleClient();
-
-  display.rtcGetRtcData();
-  sevenSegment.print(display.rtcGetSecond(), DEC);
-  sevenSegment.writeDisplay();
-}
-
-static void handleRoot()
+void loop()
 {
-  Serial.println("Handling request:");
-  for (unsigned index = 0; index < server.args(); index++)
+  const bool buttonIsPressed = !digitalRead(pins::BUTTON);
+  const unsigned long currentSeconds = seconds();
+
+  // Wireup debug mode:
+  // setSegment(pins::TENS_DIGIT.a_pin, currentSeconds % 7 >= 0);
+  // setSegment(pins::TENS_DIGIT.b_pin, currentSeconds % 7 >= 1);
+  // setSegment(pins::TENS_DIGIT.c_pin, currentSeconds % 7 >= 2);
+  // setSegment(pins::TENS_DIGIT.d_pin, currentSeconds % 7 >= 3);
+  // setSegment(pins::TENS_DIGIT.e_pin, currentSeconds % 7 >= 4);
+  // setSegment(pins::TENS_DIGIT.f_pin, currentSeconds % 7 >= 5);
+  // setSegment(pins::TENS_DIGIT.g_pin, currentSeconds % 7 >= 6);
+  // setSegment(pins::ONES_DIGIT.a_pin, currentSeconds % 7 >= 0);
+  // setSegment(pins::ONES_DIGIT.b_pin, currentSeconds % 7 >= 1);
+  // setSegment(pins::ONES_DIGIT.c_pin, currentSeconds % 7 >= 2);
+  // setSegment(pins::ONES_DIGIT.d_pin, currentSeconds % 7 >= 3);
+  // setSegment(pins::ONES_DIGIT.e_pin, currentSeconds % 7 >= 4);
+  // setSegment(pins::ONES_DIGIT.f_pin, currentSeconds % 7 >= 5);
+  // setSegment(pins::ONES_DIGIT.g_pin, currentSeconds % 7 >= 6);
+  // return;
+
+  if (buttonIsPressed)
   {
-    Serial.println(server.argName(index) + " " + server.arg(index));
+    engageShameMode();
+    secondsAtZeroCount = currentSeconds;
   }
-  const String postBody = server.arg("plain"); // "plain" is a magic key used to indicate the POST payload.
-  drawPage(postBody.c_str(), Config::HOSTNAME, currentIP);
-  server.send(200, "text/plain", "Hello, world!");
-}
 
-static void drawPage(const char* quote, const char* const hostname, const IPAddress ip)
-{
-  display.clearDisplay();
+  else
+  {
+    const unsigned currentCount = (currentSeconds - secondsAtZeroCount) / SECONDS_PER_COUNT;
 
-  display.setFont(&FreeSerifBoldItalic24pt7b);
-  display.setTextColor(INKPLATE_BLACK);
-  display.setCursor(20, 40);
-  display.print(quote);
+    const unsigned tensDigit = (currentCount % 100) / 10;
+    const unsigned onesDigit = currentCount % 10;
 
-  printConnectionInstructions(hostname, ip);
-
-  display.display();
-}
-
-static void printConnectionInstructions(const char* const hostname, const IPAddress ip) {
-  String instructions;
-
-  instructions += "http://";
-  instructions += hostname;
-  instructions += ".local";
-
-  instructions += "\nor ";
-
-  instructions += "http://";
-  instructions += ip.toString();
-
-  display.setFont(&FreeMono12pt7b);
-  int16_t x1, y1;
-  uint16_t w, h;
-  display.getTextBounds(instructions, 0, 0, &x1, &y1, &w, &h);
-  const int16_t startingX = display.width() - w;
-  const int16_t startingY = display.height() - h;
-  display.setCursor(startingX, startingY);
-  display.print(instructions);
+    setDigit(pins::TENS_DIGIT, encodeDigit(tensDigit));
+    setDigit(pins::ONES_DIGIT, encodeDigit(onesDigit));
+  }
 }
