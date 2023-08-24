@@ -95,27 +95,40 @@ void loop()
   const bool buttonIsPressed = !digitalRead(pins::BUTTON);
   const unsigned long currentSeconds = seconds();
 
-  // Wireup debug mode:
-  // setSegment(pins::TENS_DIGIT.a_pin, currentSeconds % 7 >= 0);
-  // setSegment(pins::TENS_DIGIT.b_pin, currentSeconds % 7 >= 1);
-  // setSegment(pins::TENS_DIGIT.c_pin, currentSeconds % 7 >= 2);
-  // setSegment(pins::TENS_DIGIT.d_pin, currentSeconds % 7 >= 3);
-  // setSegment(pins::TENS_DIGIT.e_pin, currentSeconds % 7 >= 4);
-  // setSegment(pins::TENS_DIGIT.f_pin, currentSeconds % 7 >= 5);
-  // setSegment(pins::TENS_DIGIT.g_pin, currentSeconds % 7 >= 6);
-  // setSegment(pins::ONES_DIGIT.a_pin, currentSeconds % 7 >= 0);
-  // setSegment(pins::ONES_DIGIT.b_pin, currentSeconds % 7 >= 1);
-  // setSegment(pins::ONES_DIGIT.c_pin, currentSeconds % 7 >= 2);
-  // setSegment(pins::ONES_DIGIT.d_pin, currentSeconds % 7 >= 3);
-  // setSegment(pins::ONES_DIGIT.e_pin, currentSeconds % 7 >= 4);
-  // setSegment(pins::ONES_DIGIT.f_pin, currentSeconds % 7 >= 5);
-  // setSegment(pins::ONES_DIGIT.g_pin, currentSeconds % 7 >= 6);
-  // return;
-
   if (buttonIsPressed)
   {
     engageShameMode();
     secondsAtZeroCount = currentSeconds;
+  }
+
+  else if (!secondsAtZeroCount)
+  {
+    // The button hasn't been pressed yet. Show an animation to help debug display wireup.
+
+    // Light up these segments in this order.
+    bool SevenSegment::* const segments[] = {
+      &SevenSegment::a,
+      &SevenSegment::b,
+      &SevenSegment::c,
+      &SevenSegment::d,
+      &SevenSegment::e,
+      &SevenSegment::f,
+      &SevenSegment::g,
+    };
+
+    // Figure out which segments should be lit up at this point in time.
+    SevenSegment frame = {};
+    const unsigned segmentCount = sizeof(segments)/sizeof(segments[0]);
+    const unsigned lastSegmentIndexToLightUp = currentSeconds % segmentCount;
+    for (unsigned segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++)
+    {
+      bool shouldLightThisSegment = segmentIndex <= lastSegmentIndexToLightUp;
+      bool& segment = frame.*segments[segmentIndex];
+      segment = shouldLightThisSegment;
+    }
+
+    setDigit(pins::TENS_DIGIT, frame);
+    setDigit(pins::ONES_DIGIT, frame);
   }
 
   else
