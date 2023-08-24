@@ -20,24 +20,24 @@ namespace pins
 	// The common anode of the display should be connected to VIN,
 	// which should have +9V from the barrel jack power supply.
 	const static SevenSegmentPinMap TENS_DIGIT = {
-	  0,
-	  1,
-	  2,
-	  3,
-	  4,
-	  5,
-	  6,
+		0,
+		1,
+		2,
+		3,
+		4,
+		5,
+		6,
 	};
 
 	const static SevenSegmentPinMap ONES_DIGIT = {
-	  7,
-	  8,
-	  9,
-	  10,
-	  11,
-	  12,
-	  // Skip digital pin 13 because it has the board's builtin LED.
-	  // If we also put our segment on that pin, it would be too dim.
-	  A0,
+		7,
+		8,
+		9,
+		10,
+		11,
+		12,
+		// Skip digital pin 13 because it has the board's builtin LED.
+		// If we also put our segment on that pin, it would be too dim.
+		A0,
 	};
 }

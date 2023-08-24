@@ -1,6 +1,5 @@
 #include "seven_segment.hpp"
 
-
 const static unsigned char A = 1 << 0;
 const static unsigned char B = 1 << 1;
 const static unsigned char C = 1 << 2;
@@ -8,7 +7,6 @@ const static unsigned char D = 1 << 3;
 const static unsigned char E = 1 << 4;
 const static unsigned char F = 1 << 5;
 const static unsigned char G = 1 << 6;
-
 
 SevenSegment encodeDigit(const unsigned int digit)
 {
@@ -59,7 +57,6 @@ SevenSegment encodeDigit(const unsigned int digit)
 		result&G,
 	};
 }
-
 
 SevenSegment encodeLetter(const char letter)
 {
