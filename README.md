@@ -1,9 +1,11 @@
+https://github.com/SyntaxColoring/days-since-last-incident/assets/3236864/7a0b07ef-4a32-4b01-a17a-5692b2cf9715
+
 # Features
 
-* Track workplace incidents of your choice, such as bad puns or industrial maimings
+* Count the days your workplace can go without having any incidents, such as bad puns or industrial maimings
 * High-fidelity audio mimicking a groaning human voice, if the human voice is a square wave
 * Exceeds the GPIO pins' absolute maximum voltage ratings
-* Big chonky button 👌
+* Big chonky button to reset the counter to zero 👌
 
 # Required components
 
