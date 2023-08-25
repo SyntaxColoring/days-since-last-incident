@@ -10,6 +10,7 @@
 * An [Adafruit METRO 328](https://www.adafruit.com/product/2488).
 * A 9V DC barrel jack power supply. See the Adafruit METRO documentation for which ones will fit.
 * 2 big 7-segment displays. I'm not sure which ones I used, but they're probably the [SA23-11SURKWA](https://www.digikey.com/en/products/detail/kingbright/SA23-11SURKWA/16602188) or something equivalent.
+* Any big button, like [this arcade button](https://www.adafruit.com/product/1185?gclid=Cj0KCQjw_5unBhCMARIsACZyzS3kSSx5Ns0t3jgpsWiWMn4FjXYz8Yy0U-KXcDMY1AZvJeyogrURNjEaArY9EALw_wcB).
 * An 8Ω speaker.
 * 100Ω and 220Ω resistors.
 * Some kind of enclosure to hold it together. Mine is a 3D-printed frankenstein that isn't easily reproducible—sorry!
