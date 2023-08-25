@@ -1,4 +1,4 @@
-https://github.com/SyntaxColoring/days-since-last-incident/assets/3236864/7a0b07ef-4a32-4b01-a17a-5692b2cf9715
+https://github.com/SyntaxColoring/days-since-last-incident/assets/3236864/9f909b1d-97f8-4a53-9e58-675320c04951
 
 # Features
 
