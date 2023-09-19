@@ -9,7 +9,7 @@ const static unsigned SHAME_HZ_1 = 64;
 const static unsigned SHAME_HZ_2 = 32;
 const static unsigned SHAME_TEXT_TOGGLE_MILLIS = SHAME_MILLIS / 4;
 
-const static unsigned long SECONDS_PER_COUNT = 60u * 60 * 24;
+const static unsigned long SECONDS_PER_COUNT = 60ul * 60ul * 24ul;
 
 static unsigned long secondsAtZeroCount = 0;
 
